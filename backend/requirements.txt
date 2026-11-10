@@ -1,0 +1,19 @@
+# Phase 1 (Units 1-2): no external dependencies
+
+# Phase 2 (Unit 3)
+pandas
+openpyxl
+beautifulsoup4
+requests
+flask
+flask-cors
+
+# Phase 3 (Unit 4)
+pymongo
+mongomock
+scikit-learn
+tensorflow-cpu
+
+# Phase 4 (Unit 5)
+joblib
+pytest

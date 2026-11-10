@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MediSense AI — Patient Risk Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">MS</span>
+      <span class="brand-name">MediSense<em>AI</em></span>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard">Dashboard</button>
+      <button class="nav-item" data-view="predict">Predict Risk</button>
+      <button class="nav-item" data-view="import">Import Data</button>
+      <button class="nav-item" data-view="ranges">Reference Ranges</button>
+    </nav>
+    <div class="sidebar-foot">
+      <span class="dot" id="apiDot"></span>
+      <span id="apiStatus">Checking API…</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD VIEW -->
+    <section class="view" id="view-dashboard">
+      <header class="view-head">
+        <div>
+          <h1>Patient Overview</h1>
+          <p class="sub">Live risk read‑out across every patient currently on file.</p>
+        </div>
+        <button class="btn-primary" id="addPatientBtn">+ Add patient</button>
+      </header>
+
+      <div class="stat-strip">
+        <div class="stat">
+          <span class="stat-value" id="statTotal">0</span>
+          <span class="stat-label">Patients on file</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value danger" id="statHigh">0</span>
+          <span class="stat-label">Flagged high‑risk</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="statAvgAge">–</span>
+          <span class="stat-label">Average age</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value ok" id="statNormal">0</span>
+          <span class="stat-label">No active flags</span>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-head-row">
+          <span>Patient</span>
+          <span>Vitals strip</span>
+          <span>Risk</span>
+          <span></span>
+        </div>
+        <div id="patientList" class="patient-list">
+          <div class="empty-state">No patients yet — add one, or head to <strong>Import Data</strong> to bulk‑upload a workbook.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREDICT RISK VIEW -->
+    <section class="view hidden" id="view-predict">
+      <header class="view-head">
+        <div>
+          <h1>Predict Risk</h1>
+          <p class="sub">Run a patient's vitals through the trained risk classifier (Random Forest).</p>
+        </div>
+      </header>
+
+      <div class="predict-layout">
+        <div class="import-card predict-form-card">
+          <form id="predictForm">
+            <div class="form-grid">
+              <label>Age <input required type="number" name="age" min="0" max="130" placeholder="60"></label>
+              <label>Systolic BP <input required type="number" name="systolic_bp" placeholder="150"></label>
+              <label>Diastolic BP <input required type="number" name="diastolic_bp" placeholder="96"></label>
+              <label>Heart rate <input required type="number" name="heart_rate" placeholder="108"></label>
+              <label>Temp (°C) <input required type="number" step="0.1" name="temperature_c" placeholder="37.0"></label>
+              <label>SpO2 (%) <input required type="number" name="spo2" placeholder="95"></label>
+            </div>
+            <button type="submit" class="btn-primary" id="predictSubmit">Predict risk</button>
+          </form>
+          <div id="predictError" class="modal-error hidden"></div>
+        </div>
+
+        <div class="predict-result-card" id="predictResultCard">
+          <div class="predict-placeholder">
+            <span class="predict-placeholder-icon">🩺</span>
+            <p>Fill in vitals and click <strong>Predict risk</strong> to see the model's call.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- IMPORT VIEW -->
+    <section class="view hidden" id="view-import">
+      <header class="view-head">
+        <div>
+          <h1>Import Data</h1>
+          <p class="sub">Bulk‑load patients from an Excel (.xlsx) or CSV file.</p>
+        </div>
+      </header>
+
+      <div class="import-card">
+        <form id="importForm">
+          <label class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden>
+            <span class="dz-icon">⇪</span>
+            <span class="dz-text">Drop a file here, or click to browse</span>
+            <span class="dz-hint">.xlsx, .xls or .csv — must include patient_id, name, age, gender, contact, systolic_bp, diastolic_bp, heart_rate, temperature_c, spo2</span>
+          </label>
+          <div id="fileChosen" class="file-chosen hidden"></div>
+          <button type="submit" class="btn-primary" id="importSubmit" disabled>Import file</button>
+        </form>
+
+        <div id="importResult" class="import-result hidden"></div>
+      </div>
+    </section>
+
+    <!-- REFERENCE RANGES VIEW -->
+    <section class="view hidden" id="view-ranges">
+      <header class="view-head">
+        <div>
+          <h1>Reference Ranges</h1>
+          <p class="sub">Normal ranges used to compute risk flags, sourced by the scraping module.</p>
+        </div>
+      </header>
+      <div class="table-card">
+        <div class="range-head-row">
+          <span>Test</span><span>Low</span><span>High</span><span>Unit</span>
+        </div>
+        <div id="rangeList"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Add patient modal -->
+<div class="modal-backdrop hidden" id="modalBackdrop">
+  <div class="modal">
+    <h2>Add patient</h2>
+    <form id="addPatientForm">
+      <div class="form-grid">
+        <label>Patient ID <input required name="patient_id" placeholder="P010"></label>
+        <label>Name <input required name="name" placeholder="Full name"></label>
+        <label>Age <input required type="number" name="age" min="0" max="130"></label>
+        <label>Gender
+          <select name="gender"><option>F</option><option>M</option><option>Other</option></select>
+        </label>
+        <label>Contact <input name="contact" placeholder="email or phone"></label>
+      </div>
+      <h3>Vitals (optional)</h3>
+      <div class="form-grid">
+        <label>Systolic BP <input type="number" name="systolic_bp" placeholder="120"></label>
+        <label>Diastolic BP <input type="number" name="diastolic_bp" placeholder="80"></label>
+        <label>Heart rate <input type="number" name="heart_rate" placeholder="72"></label>
+        <label>Temp (°C) <input type="number" step="0.1" name="temperature_c" placeholder="36.8"></label>
+        <label>SpO2 (%) <input type="number" name="spo2" placeholder="98"></label>
+      </div>
+      <div id="modalError" class="modal-error hidden"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="modalCancel">Cancel</button>
+        <button type="submit" class="btn-primary">Save patient</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "accuracy": 0.8667,
+  "feature_importances": {
+    "systolic_bp": 0.219,
+    "diastolic_bp": 0.176,
+    "heart_rate": 0.16,
+    "temperature_c": 0.268,
+    "spo2": 0.083,
+    "age": 0.095
+  },
+  "trained_on_patients": 60
+}
