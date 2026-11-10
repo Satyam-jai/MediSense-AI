@@ -91,7 +91,7 @@ def create_app() -> Flask:
     # on every restart. Falls back to None if nothing has been trained yet —
     # /api/ml/train still works as an in-memory dev/demo path either way.
     app.config["PERSISTED_RISK_MODEL"] = model_loader.load_risk_model()
-    app.config["PERSISTED_SCAN_MODEL"] = model_loader.load_scan_model()
+    app.config["PERSISTED_SCAN_MODEL"] = None  # Disabled for low-memory deployment
 
     @app.errorhandler(MediSenseError)
     def handle_domain_error(exc: MediSenseError):
@@ -279,3 +279,4 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
+
