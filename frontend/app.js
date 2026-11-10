@@ -1,7 +1,7 @@
 /* app.js — MediSense AI dashboard
    Unit 3: JavaScript fundamentals, DOM manipulation, Fetch API */
 
-const API_BASE = window.MEDISENSE_API_BASE || "http://127.0.0.1:5000/api";
+const API_BASE = window.MEDISENSE_API_BASE || "https://medisense-backend-025n.onrender.com/api";
 
 const state = { patients: [] };
 
