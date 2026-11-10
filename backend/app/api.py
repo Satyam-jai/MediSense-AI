@@ -67,18 +67,14 @@ class InMemoryPatientRepository:
 
 
 def _build_repository():
-    """Try a real MongoDB connection first; fall back to mongomock (in-memory,
-    same pymongo API) if no mongod is reachable, so the app still runs on a
-    laptop that doesn't have MongoDB installed. Set MEDISENSE_FORCE_MOCK_DB=1
-    to skip straight to the mock (useful for CI/tests)."""
+    """Use mongomock only when explicitly requested for local tests.
+    Cloud deployment requires a working MongoDB connection."""
     if os.environ.get("MEDISENSE_FORCE_MOCK_DB") == "1":
         return MongoPatientRepository(use_mock=True)
-    try:
-        repo = MongoPatientRepository()
-        repo._client.admin.command("ping")
-        return repo
-    except Exception:
-        return MongoPatientRepository(use_mock=True)
+
+    repo = MongoPatientRepository()
+    repo._client.admin.command("ping")
+    return repo
 
 
 def create_app() -> Flask:
